@@ -3,19 +3,16 @@ from modules.log_reader import LogReader
 from modules.log_analyzer import LogAnalyzer
 from modules.log_ai import LogAI  # Importer la classe LogAI pour l'option GPT
 from modules.notification import Notification  # Import de la classe Notification
+import schedule
+import time  # Nécessaire pour le délai entre les exécutions
+from datetime import datetime # pour afficher l'heure entre les exécutions
 
-def main():
-    # Gestion des arguments en ligne de commande
-    parser = argparse.ArgumentParser(description="Script d'analyse de logs")
-    parser.add_argument("repertoire", help="Chemin vers le répertoire contenant les fichiers de logs", type=str)
-    parser.add_argument("--pattern", help="Pattern pour filtrer les fichiers de logs (par défaut 'secure*')", type=str, default="secure*")
-    parser.add_argument("--seuil", help="Seuil d'alerte pour les adresses IP suspectes", type=int, default=10)
-    parser.add_argument("--intervalle", help="Intervalle de temps pour l'analyse des accès (par défaut '1min')", type=str, default="1min")
-    parser.add_argument("--use-gpt", help="Utiliser GPT pour l'analyse des logs avec OpenAI", action="store_true")
-    parser.add_argument("--notifier", help="Notifier les évènements critiques par e-mail", action="store_true")
-    parser.add_argument("--graphe", help="Afficher un graphe des évènements critiques", action="store_true")
-    parser.add_argument("--persister", help="Persister les évènements critiques dans SQLite", action="store_true")
-    args = parser.parse_args()
+def analyser_logs(args):
+    """
+    Fonction principale d'analyse des logs. Cette fonction sera appelée à chaque exécution programmée.
+    Elle prend les arguments fournis en ligne de commande via l'objet args.
+    """
+    print(f"\nDémarrage de l'analyse des logs à {datetime.now()}")
 
     # Créer une instance de LogReader avec le chemin du répertoire
     lecteur = LogReader(args.repertoire)
@@ -36,7 +33,6 @@ def main():
             lecteur.lire_logs_bruts(fichier_log)
             # Créer une instance de LogAI avec la liste de logs
             analyseur_ai = LogAI(lecteur.lignes_extraites_brut[:10])  # Limiter à 10 lignes pour l'exemple
-            # analyseur_ai.__lire_cle_api()  # Lire la clé API OpenAI
 
             # Analyser les logs avec OpenAI GPT
             try:
@@ -86,6 +82,36 @@ def main():
             # lecteur.afficher_dataframe()
     else:
         print(f"Aucun fichier de logs correspondant au pattern '{args.pattern}' n'a été trouvé dans le répertoire.")
+
+def main():
+    # Gestion des arguments en ligne de commande
+    parser = argparse.ArgumentParser(description="Script d'analyse de logs")
+    parser.add_argument("repertoire", help="Chemin vers le répertoire contenant les fichiers de logs", type=str)
+    parser.add_argument("--pattern", help="Pattern pour filtrer les fichiers de logs (par défaut 'secure*')", type=str, default="secure*")
+    parser.add_argument("--seuil", help="Seuil d'alerte pour les adresses IP suspectes", type=int, default=10)
+    parser.add_argument("--intervalle", help="Intervalle de temps pour l'analyse des accès (par défaut '1min')", type=str, default="1min")
+    parser.add_argument("--use-gpt", help="Utiliser GPT pour l'analyse des logs avec OpenAI", action="store_true")
+    parser.add_argument("--notifier", help="Notifier les évènements critiques par e-mail", action="store_true")
+    parser.add_argument("--graphe", help="Afficher un graphe des évènements critiques", action="store_true")
+    parser.add_argument("--persister", help="Persister les évènements critiques dans SQLite", action="store_true")
+    parser.add_argument("--planifier",
+        help="Planification du script, indiquer le nombre de minutes entre chaque exécution", type=int)
+    args = parser.parse_args()
+
+    # Si l'option --planifier est utilisée, planifier l'exécution du script
+    if args.planifier:
+        print(f"Planification du script toutes les {args.planifier} minutes.")
+
+        # Planifier l'analyse des logs en fonction de l'intervalle spécifié
+        schedule.every(args.planifier).minutes.do(analyser_logs, args=args)
+
+        # Boucle infinie pour exécuter les tâches planifiées
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    else:
+        # Si la planification n'est pas spécifiée, exécuter une seule fois
+        analyser_logs(args)
 
 
 if __name__ == "__main__":
