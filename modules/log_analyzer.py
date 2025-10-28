@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 class LogAnalyzer:
     def __init__(self, df_logs):
@@ -45,3 +46,34 @@ class LogAnalyzer:
                 print(f"Aucun accès suspect détecté dans l'intervalle de {intervalle_temps}.")
         else:
             print("Le DataFrame est vide. Veuillez charger les logs avant l'analyse.")
+
+    def afficher_evenements_par_date(self):
+        """
+        Affiche un graphique de l'évolution des événements critiques par date.
+        :param logs_df: DataFrame Pandas contenant les logs avec une colonne 'Date/Heure'.
+        """
+        if not self.df_logs.empty:
+            # Convertir la colonne 'Date/Heure' en datetime si ce n'est pas déjà fait
+            try:
+                self.df_logs['DateHeure'] = pd.to_datetime(self.df_logs['DateHeure'], format='%b %d %H:%M:%S')
+            except Exception as e:
+                print(f"Erreur lors de la conversion des dates : {e}")
+                return
+
+            # Compter le nombre d'événements critiques par jour
+            evenements_par_date = self.df_logs.groupby(self.df_logs['DateHeure'].dt.date).size()
+
+            # Créer le graphique linéaire
+            plt.figure(figsize=(10, 6))
+            plt.plot(evenements_par_date.index, evenements_par_date.values, marker='o', linestyle='-', color='blue')
+
+            # Ajouter des titres et des labels
+            plt.title("Évolution des événements critiques par date")
+            plt.xlabel("Date")
+            plt.ylabel("Nombre d'événements critiques")
+
+            # Afficher le graphique
+            plt.grid(True)
+            plt.xticks(rotation=45)  # Rotation des dates pour une meilleure lisibilité
+            plt.tight_layout()
+            plt.show()

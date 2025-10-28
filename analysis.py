@@ -12,6 +12,8 @@ def main():
     parser.add_argument("--seuil", help="Seuil d'alerte pour les adresses IP suspectes", type=int, default=10)
     parser.add_argument("--intervalle", help="Intervalle de temps pour l'analyse des accès (par défaut '1min')", type=str, default="1min")
     parser.add_argument("--use-gpt", help="Utiliser GPT pour l'analyse des logs avec OpenAI", action="store_true")
+    parser.add_argument("--notifier", help="Notifier les évènements critiques par e-mail", action="store_true")
+    parser.add_argument("--graphe", help="Afficher un graphe des évènements critiques", action="store_true")
     args = parser.parse_args()
 
     # Créer une instance de LogReader avec le chemin du répertoire
@@ -58,13 +60,19 @@ def main():
             lignes_suspectes = analyseur.analyser_frequence_ips(intervalle_temps=args.intervalle, seuil_alerte=args.seuil)
 
             if lignes_suspectes:
-                print("Événements critiques détectés, envoi d'une notification par email...")
+                if args.graphe:
+                    # Afficher un graphe des événements critiques
+                    analyseur.afficher_evenements_par_date()
 
-                # Créer une instance de Notification avec le fichier de configuration
-                notification = Notification()
+                if args.notifier:
+                    # Envoyer une notification par email si des événements critiques sont détectés
+                    print("Événements critiques détectés, envoi d'une notification par email...")
 
-                # Envoyer la notification avec les événements critiques
-                notification.envoyer_notification_evenements_critiques(lignes_suspectes[:10])
+                    # Créer une instance de Notification avec le fichier de configuration
+                    notification = Notification()
+
+                    # Envoyer la notification avec les événements critiques
+                    notification.envoyer_notification_evenements_critiques(lignes_suspectes[:10])
             else:
                 print("Aucun événement critique détecté.")
 
