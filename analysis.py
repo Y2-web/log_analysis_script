@@ -2,6 +2,7 @@ import argparse
 from modules.log_reader import LogReader
 from modules.log_analyzer import LogAnalyzer
 from modules.log_ai import LogAI  # Importer la classe LogAI pour l'option GPT
+from modules.notification import Notification  # Import de la classe Notification
 
 def main():
     # Gestion des arguments en ligne de commande
@@ -54,7 +55,18 @@ def main():
             analyseur = LogAnalyzer(lecteur.df_logs)
 
             # Analyser la fréquence des adresses IP dans l'intervalle de temps spécifié
-            analyseur.analyser_frequence_ips(intervalle_temps=args.intervalle, seuil_alerte=args.seuil)
+            lignes_suspectes = analyseur.analyser_frequence_ips(intervalle_temps=args.intervalle, seuil_alerte=args.seuil)
+
+            if lignes_suspectes:
+                print("Événements critiques détectés, envoi d'une notification par email...")
+
+                # Créer une instance de Notification avec le fichier de configuration
+                notification = Notification()
+
+                # Envoyer la notification avec les événements critiques
+                notification.envoyer_notification_evenements_critiques(lignes_suspectes[:10])
+            else:
+                print("Aucun événement critique détecté.")
 
             # Afficher le DataFrame contenant les informations extraites
             # lecteur.afficher_dataframe()
