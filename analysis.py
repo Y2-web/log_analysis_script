@@ -14,6 +14,7 @@ def main():
     parser.add_argument("--use-gpt", help="Utiliser GPT pour l'analyse des logs avec OpenAI", action="store_true")
     parser.add_argument("--notifier", help="Notifier les évènements critiques par e-mail", action="store_true")
     parser.add_argument("--graphe", help="Afficher un graphe des évènements critiques", action="store_true")
+    parser.add_argument("--persister", help="Persister les évènements critiques dans SQLite", action="store_true")
     args = parser.parse_args()
 
     # Créer une instance de LogReader avec le chemin du répertoire
@@ -73,6 +74,11 @@ def main():
 
                     # Envoyer la notification avec les événements critiques
                     notification.envoyer_notification_evenements_critiques(lignes_suspectes[:10])
+
+                if args.persister:
+                    # Persister les événements critiques dans une base de données SQLite
+                    print("Persistance des événements critiques dans une base de données SQLite...")
+                    analyseur.persister_evenements_critique()
             else:
                 print("Aucun événement critique détecté.")
 
