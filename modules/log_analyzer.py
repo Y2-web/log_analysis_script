@@ -38,7 +38,9 @@ class LogAnalyzer:
             # Afficher les résultats
             if not acces_suspects.empty:
                 print(f"\nAccès suspects détectés (plus de {seuil_alerte} accès par IP dans {intervalle_temps}) :")
-                print(acces_suspects)
+                # return acces_suspects.tolist()
+                return [(index_tuple, valeur) for index_tuple, valeur
+                        in zip(acces_suspects.index, acces_suspects.values)]
             else:
                 print(f"Aucun accès suspect détecté dans l'intervalle de {intervalle_temps}.")
         else:
